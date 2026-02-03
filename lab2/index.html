@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لعبة XO</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: "Cairo", sans-serif;
+    }
+
+    body {
+        margin: 0;
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        color: #333;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+        color: #0b3c5d;
+    }
+
+    .container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 25px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        text-align: center;
+    }
+
+    input, select, button {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+    }
+
+    button {
+        background: #4facfe;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background: #00c6ff;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .cell {
+        background: #f0f8ff;
+        border-radius: 12px;
+        height: 90px;
+        font-size: 40px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .cell:hover {
+        background: #d6ecff;
+    }
+
+    .status {
+        margin-top: 15px;
+        font-weight: bold;
+        color: #0b3c5d;
+    }
+
+    footer {
+        background: #0b3c5d;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    footer span {
+        display: block;
+    }
+
+    @media (max-width: 480px) {
+        .cell {
+            height: 70px;
+            font-size: 32px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Start Screen -->
+    <div class="card" id="startScreen">
+        <h1>🎮 لعبة XO</h1>
+        <select id="mode">
+            <option value="1">لاعب واحد</option>
+            <option value="2">لاعبان</option>
+        </select>
+
+        <input type="text" id="player1" placeholder="اسم اللاعب الأول">
+        <input type="text" id="player2" placeholder="اسم اللاعب الثاني (اختياري)">
+
+        <button onclick="startGame()">ابدأ اللعب</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="card hidden" id="gameScreen">
+        <h1>لعبة XO</h1>
+        <div class="status" id="status"></div>
+
+        <div class="board" id="board">
+            <div class="cell" onclick="play(0)"></div>
+            <div class="cell" onclick="play(1)"></div>
+            <div class="cell" onclick="play(2)"></div>
+            <div class="cell" onclick="play(3)"></div>
+            <div class="cell" onclick="play(4)"></div>
+            <div class="cell" onclick="play(5)"></div>
+            <div class="cell" onclick="play(6)"></div>
+            <div class="cell" onclick="play(7)"></div>
+            <div class="cell" onclick="play(8)"></div>
+        </div>
+
+        <button onclick="resetGame()">إعادة اللعب</button>
+    </div>
+
+</div>
+
+<footer>
+    <span>Student Name: ALWALEED ABDULMALIK HAMID ALTHOBAITY (الوليد عبدالملك بن حامد الثبيتي)</span>
+    <span>Student ID: 44611512</span>
+    <span>Supervised by: Mohammed Ahmed Jabali</span>
+</footer>
+
+<script>
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let currentPlayer = "X";
+    let players = [];
+    let mode = 1;
+    let gameActive = true;
+
+    const statusText = document.getElementById("status");
+    const cells = document.querySelectorAll(".cell");
+
+    function startGame() {
+        mode = document.getElementById("mode").value;
+        const p1 = document.getElementById("player1").value || "اللاعب 1";
+        const p2 = mode == 2 ? (document.getElementById("player2").value || "اللاعب 2") : "الكمبيوتر";
+
+        players = [p1, p2];
+
+        document.getElementById("startScreen").classList.add("hidden");
+        document.getElementById("gameScreen").classList.remove("hidden");
+
+        updateStatus();
+    }
+
+    function updateStatus() {
+        statusText.textContent = `دور: ${players[currentPlayer === "X" ? 0 : 1]} (${currentPlayer})`;
+    }
+
+    function play(index) {
+        if (!gameActive || board[index] !== "") return;
+
+        board[index] = currentPlayer;
+        cells[index].textContent = currentPlayer;
+
+        if (checkWin()) {
+            statusText.textContent = `🎉 فاز ${players[currentPlayer === "X" ? 0 : 1]}!`;
+            gameActive = false;
+            return;
+        }
+
+        if (board.every(cell => cell !== "")) {
+            statusText.textContent = "😐 تعادل!";
+            gameActive = false;
+            return;
+        }
+
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        updateStatus();
+
+        if (mode == 1 && currentPlayer === "O") {
+            setTimeout(computerPlay, 500);
+        }
+    }
+
+    function computerPlay() {
+        let emptyCells = board
+            .map((val, idx) => val === "" ? idx : null)
+            .filter(v => v !== null);
+
+        const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        play(randomIndex);
+    }
+
+    function checkWin() {
+        const wins = [
+            [0,1,2],[3,4,5],[6,7,8],
+            [0,3,6],[1,4,7],[2,5,8],
+            [0,4,8],[2,4,6]
+        ];
+
+        return wins.some(combo => {
+            return combo.every(i => board[i] === currentPlayer);
+        });
+    }
+
+    function resetGame() {
+        board = ["", "", "", "", "", "", "", "", ""];
+        currentPlayer = "X";
+        gameActive = true;
+        cells.forEach(cell => cell.textContent = "");
+        updateStatus();
+    }
+</script>
+
+</body>
+</html>
